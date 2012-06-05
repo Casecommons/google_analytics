@@ -1,9 +1,9 @@
 spec = Gem::Specification.new do |s|
   s.name              = 'google_analytics'
-  s.version           = '1.1.4'
-  s.date              = "2009-04-28"
-  s.author            = 'Graeme Mathieson'
-  s.email             = 'mathie@rubaidh.com'
+  s.version           = '1.1.7'
+  s.date              = "2012-06-05"
+  s.author            = 'Graeme Mathieson, Jason Berlinsky, Alexis LaJoie'
+  s.email             = 'mathie@rubaidh.com, jberlinsky@pivotallabs.com, alajoie@redpointtech.com'
   s.has_rdoc          = true
   s.rubyforge_project = "rubaidh"
   s.homepage          = 'http://rubaidh.com/portfolio/open-source/google-analytics/'
