@@ -38,6 +38,9 @@ module Rubaidh # :nodoc:
   # to a Google Analytics installation.
   class GoogleAnalytics
 
+    @@defer_load = true
+    cattr_accessor :defer_load
+
     @@tracker_id = nil
     ##
     # :singleton-method:
@@ -46,38 +49,6 @@ module Rubaidh # :nodoc:
     # code, or the value of +_uacct+ if you are using the old (urchin.js)
     # tracking code.
     cattr_accessor :tracker_id
-
-    @@domain_name = nil
-    ##
-    # :singleton-method:
-    # Specify a different domain name from the default. You'll want to use
-    # this if you have several subdomains that you want to combine into
-    # one report. See the Google Analytics documentation for more
-    # information.
-    cattr_accessor :domain_name
-
-    @@legacy_mode = false
-    ##
-    # :singleton-method:
-    # Specify whether the legacy Google Analytics code should be used. By
-    # default, the new Google Analytics code is used.
-    cattr_accessor :legacy_mode
-
-    @@analytics_url = 'http://www.google-analytics.com/urchin.js'
-    ##
-    # :singleton-method:
-    # The URL that analytics information is sent to. This defaults to the
-    # standard Google Analytics URL, and you're unlikely to need to change it.
-    # This has no effect unless you're in legacy mode.
-    cattr_accessor :analytics_url
-
-    @@analytics_ssl_url = 'https://ssl.google-analytics.com/urchin.js'
-    ##
-    # :singleton-method:
-    # The URL that analytics information is sent to when using SSL. This defaults to the
-    # standard Google Analytics URL, and you're unlikely to need to change it.
-    # This has no effect unless you're in legacy mode.
-    cattr_accessor :analytics_ssl_url
 
     @@environments = ['production']
     ##
@@ -94,25 +65,6 @@ module Rubaidh # :nodoc:
     # site; it is not the same as responding to all requests. Supply an array
     # of formats to change this.
     cattr_accessor :formats
-
-    @@defer_load = true
-    ##
-    # :singleton-method:
-    # Set this to true (the default) if you want to load the Analytics javascript at
-    # the bottom of page. Set this to false if you want to load the Analytics
-    # javascript at the top of the page. The page will render faster if you set this to
-    # true, but that will break the linking functions in Rubaidh::GoogleAnalyticsViewHelper.
-    cattr_accessor :defer_load
-
-    @@local_javascript = false
-    ##
-    # :singleton-method:
-    # Set this to true to use a local copy of the ga.js (or urchin.js) file.
-    # This gives you the added benefit of serving the JS directly from your
-    # server, which in case of a big geographical difference between your server
-    # and Google's can speed things up for your visitors. Use the
-    # 'google_analytics:update' rake task to update the local JS copies.
-    cattr_accessor :local_javascript
 
     ##
     # :singleton-method:
@@ -149,78 +101,31 @@ module Rubaidh # :nodoc:
     # Return true if the Google Analytics system is enabled and configured
     # correctly for the specified format
     def self.enabled?(format)
-      raise Rubaidh::GoogleAnalyticsConfigurationError if tracker_id.blank? || analytics_url.blank?
-      environments.include?(RAILS_ENV) && formats.include?(format.to_sym)
+      raise Rubaidh::GoogleAnalyticsConfigurationError if tracker_id.blank?
+      environments.include?(Rails.env) && formats.include?(format.to_sym)
     end
 
     # Construct the javascript code to be inserted on the calling page. The +ssl+
     # parameter can be used to force the SSL version of the code in legacy mode only.
     def self.google_analytics_code(ssl = false)
-      return legacy_google_analytics_code(ssl) if legacy_mode
-
-      extra_code = domain_name.blank? ? nil : "pageTracker._setDomainName(\"#{domain_name}\");"
-      if !override_domain_name.blank?
-        extra_code = "pageTracker._setDomainName(\"#{override_domain_name}\");"
-        self.override_domain_name = nil
-      end
-
-      code = if local_javascript
-        <<-HTML
-        <script src="#{LocalAssetTagHelper.new.javascript_path( 'ga.js' )}" type="text/javascript">
-        </script>
-        HTML
-      else
-        <<-HTML
-      <script type="text/javascript">
-      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-      </script>
-        HTML
-      end
-
-      code << <<-HTML
-      <script type="text/javascript">
-      <!--//--><![CDATA[//><!--
-      try {
-      var pageTracker = _gat._getTracker('#{request_tracker_id}');
-      #{extra_code}
-      pageTracker._initData();
-      pageTracker._trackPageview(#{request_tracked_path});
-      } catch(err) {}
-      //--><!]]>
-      </script>
-      HTML
-    end
-
-    # Construct the legacy version of the Google Analytics code. The +ssl+
-    # parameter specifies whether or not to return the SSL version of the code.
-    def self.legacy_google_analytics_code(ssl = false)
-      extra_code = domain_name.blank? ? nil : "_udn = \"#{domain_name}\";"
-      if !override_domain_name.blank?
-        extra_code = "_udn = \"#{override_domain_name}\";"
-        self.override_domain_name = nil
-      end
-
-      url = legacy_analytics_js_url(ssl)
+      protocol = (ssl) ? "https://ssl" : "http://www"
 
       code = <<-HTML
-      <script src="#{url}" type="text/javascript">
-      </script>
       <script type="text/javascript">
-      _uacct = "#{request_tracker_id}";
-      #{extra_code}
-      urchinTracker(#{request_tracked_path});
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', '#{request_tracker_id}']);
+      _gaq.push(['_setDetectTitle', false]);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = '#{protocol}.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
       </script>
       HTML
-    end
-
-    # Generate the correct URL for the legacy Analytics JS file
-    def self.legacy_analytics_js_url(ssl = false)
-      if local_javascript
-        LocalAssetTagHelper.new.javascript_path( 'urchin.js' )
-      else
-        ssl ? analytics_ssl_url : analytics_url
-      end
     end
 
     # Determine the tracker ID for this request

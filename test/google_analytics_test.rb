@@ -2,7 +2,11 @@ require File.dirname(__FILE__) + '/test_helper.rb'
 require 'test/unit'
 require 'rubygems'
 require 'mocha'
-RAILS_ENV = 'test'
+class Rails
+  def self.env
+    'test'
+  end
+end
 
 class TestMixin
   class MockRequest
@@ -39,22 +43,6 @@ class GoogleAnalyticsTest < Test::Unit::TestCase
     assert_not_nil(@ga)
   end
 
-  def test_domain_name_defaults_to_nil
-    assert_nil(@ga.domain_name)
-  end
-
-  def test_legacy_mode_defaults_to_false
-    assert_equal(false, @ga.legacy_mode)
-  end
-
-  def test_default_analytics_url
-    assert_equal("http://www.google-analytics.com/urchin.js", @ga.analytics_url)
-  end
-
-  def test_default_analytics_ssl_url
-    assert_equal('https://ssl.google-analytics.com/urchin.js', @ga.analytics_ssl_url)
-  end
-
   def test_default_environments
     assert_equal(false, @ga.environments.include?('test'))
     assert_equal(false, @ga.environments.include?('development'))
@@ -70,18 +58,9 @@ class GoogleAnalyticsTest < Test::Unit::TestCase
     assert_equal(true, @ga.defer_load)
   end
 
-  def test_local_javascript_defaults_to_false
-    assert_equal(false, @ga.local_javascript)
-  end
-
   # test self.enabled
   def test_enabled_requires_tracker_id
     Rubaidh::GoogleAnalytics.stubs(:tracker_id).returns(nil)
-    assert_raise(Rubaidh::GoogleAnalyticsConfigurationError) { Rubaidh::GoogleAnalytics.enabled?(:html) }
-  end
-
-  def test_enabled_requires_analytics_url
-    Rubaidh::GoogleAnalytics.stubs(:analytics_url).returns(nil)
     assert_raise(Rubaidh::GoogleAnalyticsConfigurationError) { Rubaidh::GoogleAnalytics.enabled?(:html) }
   end
 
