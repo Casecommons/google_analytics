@@ -16,16 +16,15 @@ spec = Gem::Specification.new do |s|
                   'to your `config/environment.rb`, inserting your own tracker id.'
                   'This can be discovered by looking at the value assigned to +_uacct+' +
                   'in the Javascript code.'
-  
+
   s.files = %w( CREDITS MIT-LICENSE README.rdoc Rakefile rails/init.rb
                 test/google_analytics_test.rb
                 test/test_helper.rb
-                test/view_helpers_test.rb
                 lib/rubaidh.rb
                 lib/rubaidh/google_analytics.rb
-                lib/rubaidh/view_helpers.rb
                 tasks/google_analytics.rake)
 
   s.add_dependency 'actionpack'
   s.add_dependency 'activesupport'
+  s.add_development_dependency "mocha"
 end
