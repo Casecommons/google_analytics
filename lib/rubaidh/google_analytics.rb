@@ -9,7 +9,9 @@ module Rubaidh # :nodoc:
     # Normally you won't need to call this directly; the +add_google_analytics_code+
     # after filter will insert it for you.
     def google_analytics_code
-      GoogleAnalytics.google_analytics_code(request.ssl?) if GoogleAnalytics.enabled?(request.format)
+      #TODO: ensure request.ssl? is correctly evaluating for SSL requests, and then stop forcing SSL
+      # GoogleAnalytics.google_analytics_code(request.ssl?) if GoogleAnalytics.enabled?(request.format)
+      GoogleAnalytics.google_analytics_code(true) if GoogleAnalytics.enabled?(request.format)
     end
 
     # Custom filter to prevent HIPPA data in search queries from being sent to Google Analytics

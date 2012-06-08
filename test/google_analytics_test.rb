@@ -4,7 +4,7 @@ require 'rubygems'
 require 'mocha'
 class Rails
   def self.env
-    'test'
+    "test"
   end
 end
 
@@ -13,6 +13,11 @@ class TestMixin
     attr_accessor :format
     attr_accessor :query_string
     attr_accessor :referer
+    attr_accessor :ssl
+
+    def ssl?
+      ssl
+    end
   end
   class MockResponse
     attr_accessor :body
@@ -26,10 +31,6 @@ class TestMixin
     self.response = MockResponse.new
   end
 
-  # override the mixin's method
-  def google_analytics_code
-    "Google Code"
-  end
 end
 
 
@@ -125,6 +126,7 @@ class GoogleAnalyticsTest < Test::Unit::TestCase
   def test_add_google_analytics_code
     # setup our test mixin
     mixin = TestMixin.new
+    mixin.stubs(:google_analytics_code).returns("Google Code")
     Rubaidh::GoogleAnalyticsMixin.stubs(:search_query_found?).returns(false)
 
     # bog standard body tag
@@ -200,6 +202,25 @@ class GoogleAnalyticsTest < Test::Unit::TestCase
 
     mixin.request.referer = "?HIHIHIHI"
     assert_equal(true, mixin.search_query_found?)
+  end
+
+  def test_ssl_is_forced_on
+    mixin = TestMixin.new
+    mixin.response.body = "<body><p>some text</p></body>"
+    Rubaidh::GoogleAnalytics.stubs(:enabled?).returns(true)
+
+    mixin.request.ssl = true
+    assert_equal(mixin.request.ssl?, true)
+
+    mixin.add_google_analytics_code
+    assert(mixin.response.body =~ /https/, "should contain https when request.ssl? is true")
+
+    mixin.response.body = "<body><p>some text</p></body>"
+    mixin.request.ssl = false
+    assert_equal(mixin.request.ssl?, false)
+
+    mixin.add_google_analytics_code
+    assert(mixin.response.body =~ /https/, "should contain https when request.ssl? is false")
   end
 
 end
