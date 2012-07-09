@@ -1,6 +1,6 @@
 spec = Gem::Specification.new do |s|
   s.name              = 'google_analytics'
-  s.version           = '1.1.8'
+  s.version           = '1.1.9'
   s.date              = "2012-06-07"
   s.author            = 'Graeme Mathieson, Jason Berlinsky, Alexis LaJoie'
   s.email             = 'mathie@rubaidh.com, jberlinsky@pivotallabs.com, alajoie@redpointtech.com'
