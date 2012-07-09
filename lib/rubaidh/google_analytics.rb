@@ -103,8 +103,7 @@ module Rubaidh # :nodoc:
     # Return true if the Google Analytics system is enabled and configured
     # correctly for the specified format
     def self.enabled?(format)
-      raise Rubaidh::GoogleAnalyticsConfigurationError if tracker_id.blank?
-      environments.include?(Rails.env) && format && formats.include?(format.to_sym)
+      tracker_id.present? && environments.include?(Rails.env) && format && formats.include?(format.to_sym)
     end
 
     # Construct the javascript code to be inserted on the calling page. The +ssl+
